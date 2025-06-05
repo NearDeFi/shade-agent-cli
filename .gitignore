@@ -1,0 +1,13 @@
+node_modules
+
+# production
+dist
+
+# local env files
+.env
+.env*.local
+
+# contract
+contracts/sandbox/target
+# contract
+contracts/proxy/target
