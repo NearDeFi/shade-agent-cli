@@ -90,11 +90,10 @@ async function main() {
     console.log('docker restarting...');
     try {
         execSync(`sudo systemctl restart docker`);
+        console.log('docker restarted');
     } catch (e) {
-        console.log('Error restart docker service', e);
-        return;
+        console.warn('WARNING: Error restarting docker service', e);
     }
-    console.log('docker restarted');
 
     let NEW_APP_CODEHASH;
     if (IS_SANDBOX) {
