@@ -288,7 +288,7 @@ async function main() {
         try {
             const child = spawn(
                 `sudo`,
-                `docker run -p 3140:3140 --env-file .env.development.local --rm -e PORT=3140 mattdlockyer/shade-agent-api@sha256:${API_CODEHASH}`.split(
+                `docker run -p 0.0.0.0:3140:3140 --platform=linux/amd64 --env-file .env.development.local --rm -e PORT=3140 mattdlockyer/shade-agent-api@sha256:${API_CODEHASH}`.split(
                     ' ',
                 ),
                 {
