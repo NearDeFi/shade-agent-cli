@@ -87,12 +87,21 @@ export const getAccount = (id = _accountId) => new Account(connection, id);
 async function main() {
     // restart docker service and all networking
 
-    console.log('docker restarting...');
-    try {
-        execSync(`sudo systemctl restart docker`);
-        console.log('docker restarted');
-    } catch (e) {
-        console.warn('WARNING: Error restarting docker service', e);
+    console.log('docker restarting...')
+    if (process.platform === 'darwin') {
+        try {
+            execSync(`docker restart $(docker ps -q)`);
+            console.log('docker restarted');
+        } catch (e) {
+            console.warn('WARNING: Error restarting docker service');
+        }
+    } else {
+        try {
+            execSync(`sudo systemctl restart docker`);
+            console.log('docker restarted');
+        } catch (e) {
+            console.warn('WARNING: Error restarting docker service');
+        }
     }
 
     let NEW_APP_CODEHASH;
@@ -102,7 +111,7 @@ async function main() {
         console.log('docker building image...');
         try {
             execSync(
-                `sudo docker build --no-cache -t ${process.env.DOCKER_TAG}:latest .`,
+                `sudo docker build --no-cache --platform=linux/amd64 -t ${process.env.DOCKER_TAG}:latest .`,
             );
         } catch (e) {
             console.log('Error docker build', e);
@@ -150,10 +159,11 @@ async function main() {
 
         try {
             const path = 'docker-compose.yaml';
-            const data = readFileSync(path).toString();
+            let data = readFileSync(path).toString();
             const match = data.match(/@sha256:[a-f0-9]{64}/gim)[1];
-            const updated = data.replace(match, `@sha256:${NEW_APP_CODEHASH}`);
-            writeFileSync(path, updated, 'utf8');
+            data = data.replace(match, `@sha256:${NEW_APP_CODEHASH}`);
+            data = data.replace('mattdlockyer/shade-agent-api-test', process.env.DOCKER_TAG)
+            writeFileSync(path, data, 'utf8');
         } catch (e) {
             console.log('Error replacing codehash in docker-compose.yaml', e);
             return;

@@ -37,7 +37,8 @@ These deployments are running in a TEE and the agent contract `ac-sandbox.[YOUR_
 ```bash
 # get this from cargo-near or near-cli-rs
 NEAR_ACCOUNT_ID=[YOUR_NEAR_ACCOUNT_ID]
-NEAR_SEED_PHRASE="..." # will need quotes around seed phrase
+# will need quotes around seed phrase
+NEAR_SEED_PHRASE="..."
 # ac-proxy is running locally so you can use yarn dev/start and test your app against the locally running shade agent api
 NEXT_PUBLIC_contractId=ac-proxy.[YOUR_NEAR_ACCOUNT_ID (from above)]
 # including this will give you a fixed account every time, remove for production use as each TEE should boot with a new ephemeral NEAR account ID
