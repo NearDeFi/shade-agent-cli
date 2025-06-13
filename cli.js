@@ -37,13 +37,14 @@ export const contractId = _contractId;
 
 const IS_SANDBOX = /sandbox/gim.test(contractId);
 
+const PHALA_API_KEY = process.env.PHALA_API_KEY;
 // deploy the contract bytes NOT the global contract if this is set... to anything
 const DEPLOY_BYTES = process.env.DEPLOY_BYTES;
 // default codehash is "proxy" for local development, contract will NOT verify anything in register_worker
 const API_CODEHASH = process.env.API_CODEHASH || 'api';
 const APP_CODEHASH = process.env.APP_CODEHASH || 'proxy';
 const GLOBAL_CONTRACT_HASH = IS_SANDBOX
-    ? '7YNvcAExky2iRBxJa5wEPofG9ddgmRLDCGHGFAuvBbL2'
+    ? '31x2yS1DZHUjMQQFXPBjbfojb4FQ8pBaER39YoReTpJb'
     : '2pSLLgLnAM9PYD7Rj6SpdK9tJRz48GQ7GrnAXK6tmm8u';
 const HD_PATH = `"m/44'/397'/0'"`;
 const FUNDING_AMOUNT = parseNearAmount('1');
@@ -87,7 +88,7 @@ export const getAccount = (id = _accountId) => new Account(connection, id);
 async function main() {
     // restart docker service and all networking
 
-    console.log('docker restarting...')
+    console.log('docker restarting...');
     if (process.platform === 'darwin') {
         try {
             execSync(`docker restart $(docker ps -q)`);
@@ -161,8 +162,15 @@ async function main() {
             const path = 'docker-compose.yaml';
             let data = readFileSync(path).toString();
             const match = data.match(/@sha256:[a-f0-9]{64}/gim)[1];
-            data = data.replace(match, `@sha256:${NEW_APP_CODEHASH}`);
-            data = data.replace('mattdlockyer/shade-agent-api-test', process.env.DOCKER_TAG)
+            const replacementHash = `@sha256:${NEW_APP_CODEHASH}`;
+            data = data.replace(match, replacementHash);
+            const index = data.indexOf(replacementHash);
+            const lastIndex = data.lastIndexOf('image:', index);
+            data =
+                data.slice(0, lastIndex) +
+                `image: ` +
+                process.env.DOCKER_TAG +
+                data.slice(index);
             writeFileSync(path, data, 'utf8');
         } catch (e) {
             console.log('Error replacing codehash in docker-compose.yaml', e);
@@ -275,12 +283,20 @@ async function main() {
          * Deploy on Phala
          */
 
+        console.log('logging in to Phala Cloud...');
+        try {
+            execSync(`phala auth login ${PHALA_API_KEY}`);
+        } catch (e) {
+            console.log('Error authenticating with Phala Cloud', e);
+            return;
+        }
+
         console.log('deploying to Phala Cloud...');
         const appNameSplit = process.env.DOCKER_TAG.split('/');
         const appName = appNameSplit[appNameSplit.length - 1];
         try {
             execSync(
-                `phala cvms create --name ${appName} --compose ./docker-compose.yaml --env-file ./.env.development.local`,
+                `phala cvms create --name ${appName} --vcpu 1 --compose ./docker-compose.yaml --env-file ./.env.development.local`,
             );
         } catch (e) {
             console.log('Error deploying to Phala Cloud', e);
