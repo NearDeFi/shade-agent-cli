@@ -44,11 +44,7 @@ const DEPLOY_BYTES = process.env.DEPLOY_BYTES;
 const API_CODEHASH = process.env.API_CODEHASH || 'api';
 const APP_CODEHASH = process.env.APP_CODEHASH || 'proxy';
 const GLOBAL_CONTRACT_HASH = IS_SANDBOX
-<<<<<<< HEAD
     ? '9f8vpuCn3A48p3mr5EVRHCbgCSYteU4FE44uib829rEK'
-=======
-    ? '31x2yS1DZHUjMQQFXPBjbfojb4FQ8pBaER39YoReTpJb'
->>>>>>> 63842b33230d11f2d7f398a6cd5a1713da66cd69
     : '2pSLLgLnAM9PYD7Rj6SpdK9tJRz48GQ7GrnAXK6tmm8u';
 const HD_PATH = `"m/44'/397'/0'"`;
 const FUNDING_AMOUNT = parseNearAmount('1');
