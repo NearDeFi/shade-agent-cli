@@ -2,6 +2,20 @@
 
 const dir = process.cwd();
 
+/**
+ * Setup and docs for commander here
+ */
+
+import { program } from 'commander';
+program.option('-w, --wasm <string>', 'wasm path to deploy custom contract');
+program.parse();
+const options = program.opts();
+// deploy the contract bytes NOT the global contract if this is set... to any valid wasm file
+const WASM_PATH = options.wasm;
+/**
+ * Continue regular imports
+ */
+
 import * as dotenv from 'dotenv';
 if (process.env.NODE_ENV !== 'production') {
     // will load for browser and backend
@@ -38,16 +52,15 @@ export const contractId = _contractId;
 const IS_SANDBOX = /sandbox/gim.test(contractId);
 
 const PHALA_API_KEY = process.env.PHALA_API_KEY;
-// deploy the contract bytes NOT the global contract if this is set... to anything
-const DEPLOY_BYTES = process.env.DEPLOY_BYTES;
+
 // default codehash is "proxy" for local development, contract will NOT verify anything in register_worker
 const API_CODEHASH = process.env.API_CODEHASH || 'api';
 const APP_CODEHASH = process.env.APP_CODEHASH || 'proxy';
 const GLOBAL_CONTRACT_HASH = IS_SANDBOX
-    ? '9f8vpuCn3A48p3mr5EVRHCbgCSYteU4FE44uib829rEK'
+    ? '31x2yS1DZHUjMQQFXPBjbfojb4FQ8pBaER39YoReTpJb'
     : '2pSLLgLnAM9PYD7Rj6SpdK9tJRz48GQ7GrnAXK6tmm8u';
 const HD_PATH = `"m/44'/397'/0'"`;
-const FUNDING_AMOUNT = parseNearAmount('1');
+const FUNDING_AMOUNT = WASM_PATH ? parseNearAmount('5') : parseNearAmount('1');
 const GAS = BigInt('300000000000000');
 
 // local vars for module
@@ -84,6 +97,9 @@ const { connection } = near;
 const { provider } = connection;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 export const getAccount = (id = _accountId) => new Account(connection, id);
+
+// output CLI options before calling main
+console.log('CLI OPTIONS SET:\n\n', options, '\n\n');
 
 async function main() {
     // restart docker service and all networking
@@ -208,13 +224,9 @@ async function main() {
     await sleep(1000);
 
     let account = getAccount(contractId);
-    if (DEPLOY_BYTES) {
+    if (WASM_PATH) {
         // deploys the contract bytes (original method and requires more funding)
-        const file = fs.readFileSync(
-            `./contracts/${
-                IS_SANDBOX ? 'sandbox' : 'proxy'
-            }/target/near/contract.wasm`,
-        );
+        const file = fs.readFileSync(WASM_PATH);
         await account.deployContract(file);
         console.log('deployed bytes', file.byteLength);
         const balance = await account.getAccountBalance();
