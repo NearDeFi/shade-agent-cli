@@ -211,7 +211,7 @@ async function main() {
         const balance = await account.getBalance();
         console.log('contract balance', balance);
     } else {
-        // deploys global contract using naj
+        // deploys global contract using near-js
         try {
             // convert base58 to hex
             const hexHash = Buffer.from(bs58.decode(GLOBAL_CONTRACT_HASH)).toString('hex');
