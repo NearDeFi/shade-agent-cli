@@ -6,10 +6,16 @@
     "author": "Matt Lockyer <github.com/mattlockyer>",
     "license": "MIT",
     "dependencies": {
+        "@near-js/accounts": "^2.1.0",
+        "@near-js/crypto": "^2.1.0",
+        "@near-js/providers": "^2.1.0",
+        "@near-js/signers": "^2.1.0",
+        "@near-js/tokens": "^2.1.0",
+        "@near-js/utils": "^2.1.0",
+        "bs58": "^6.0.0",
+        "commander": "^14.0.0",
         "dotenv": "^16.5.0",
-        "near-api-js": "^5.0.1",
-        "near-seed-phrase": "^0.2.1",
-        "commander": "^14.0.0"
+        "near-seed-phrase": "^0.2.1"
     },
     "bin": {
         "shade-agent-cli": "cli.js"

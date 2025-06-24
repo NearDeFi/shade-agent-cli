@@ -29,17 +29,12 @@ import fs from 'fs';
 import { readFileSync, writeFileSync } from 'fs';
 import { spawn, execSync } from 'child_process';
 import { parseSeedPhrase } from 'near-seed-phrase';
-import * as nearAPI from 'near-api-js';
-const {
-    Near,
-    Account,
-    KeyPair,
-    keyStores,
-    utils: {
-        PublicKey,
-        format: { parseNearAmount },
-    },
-} = nearAPI;
+import { KeyPairSigner } from '@near-js/signers';
+import { JsonRpcProvider } from "@near-js/providers";
+import { Account } from "@near-js/accounts";
+import { NEAR } from "@near-js/tokens";
+import { KeyPair } from "@near-js/crypto";
+import bs58 from 'bs58';
 
 if (!process.env.NEXT_PUBLIC_contractId) {
     console.log('env var: NEXT_PUBLIC_contractId not found');
@@ -59,8 +54,7 @@ const APP_CODEHASH = process.env.APP_CODEHASH || 'proxy';
 const GLOBAL_CONTRACT_HASH = IS_SANDBOX
     ? '31x2yS1DZHUjMQQFXPBjbfojb4FQ8pBaER39YoReTpJb'
     : '2pSLLgLnAM9PYD7Rj6SpdK9tJRz48GQ7GrnAXK6tmm8u';
-const HD_PATH = `"m/44'/397'/0'"`;
-const FUNDING_AMOUNT = WASM_PATH ? parseNearAmount('5') : parseNearAmount('1');
+const FUNDING_AMOUNT = WASM_PATH ? NEAR.toUnits('5') : NEAR.toUnits('1');
 const GAS = BigInt('300000000000000');
 
 // local vars for module
@@ -71,32 +65,17 @@ let _accountId = process.env.NEAR_ACCOUNT_ID.replaceAll('"', '');
 const { secretKey } = parseSeedPhrase(
     process.env.NEAR_SEED_PHRASE.replaceAll('"', ''),
 );
-const keyStore = new keyStores.InMemoryKeyStore();
 const keyPair = KeyPair.fromString(secretKey);
-keyStore.setKey(networkId, _accountId, keyPair);
-keyStore.setKey(networkId, _contractId, keyPair);
+const signer = new KeyPairSigner(keyPair);
 
-const config =
-    networkId === 'testnet'
-        ? {
-              networkId,
-              keyStore,
-              nodeUrl: 'https://rpc.testnet.near.org',
-              walletUrl: 'https://testnet.mynearwallet.com/',
-              explorerUrl: 'https://testnet.nearblocks.io',
-          }
-        : {
-              networkId,
-              keyStore,
-              nodeUrl: 'https://rpc.near.org',
-              walletUrl: 'https://mynearwallet.com/',
-              explorerUrl: 'https://nearblocks.io',
-          };
-const near = new Near(config);
-const { connection } = near;
-const { provider } = connection;
+const provider = new JsonRpcProvider({ 
+    url: networkId === 'testnet' 
+        ? "https://test.rpc.fastnear.com" 
+        : "https://free.rpc.fastnear.com" 
+});
+
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-export const getAccount = (id = _accountId) => new Account(connection, id);
+export const getAccount = (id = _accountId) => new Account(id, provider, signer);
 
 // output CLI options before calling main
 console.log('CLI OPTIONS SET:\n\n', options, '\n\n');
@@ -229,14 +208,14 @@ async function main() {
         const file = fs.readFileSync(WASM_PATH);
         await account.deployContract(file);
         console.log('deployed bytes', file.byteLength);
-        const balance = await account.getAccountBalance();
+        const balance = await account.getBalance();
         console.log('contract balance', balance);
     } else {
-        // deploys global contract using near-cli command
+        // deploys global contract using naj
         try {
-            execSync(
-                `near contract deploy ${contractId} use-global-hash ${GLOBAL_CONTRACT_HASH} without-init-call network-config testnet sign-with-seed-phrase '${process.env.NEAR_SEED_PHRASE}' --seed-phrase-hd-path ${HD_PATH} send`,
-            );
+            // convert base58 to hex
+            const hexHash = Buffer.from(bs58.decode(GLOBAL_CONTRACT_HASH)).toString('hex');
+            await account.useGlobalContract({codeHash: hexHash});
         } catch (e) {
             console.log('Error deploying global contract', e);
         }
@@ -245,7 +224,7 @@ async function main() {
     console.log('contract deployed:', contractId);
     await sleep(1000);
 
-    const initRes = await account.functionCall({
+    const initRes = await account.callFunction({
         contractId,
         methodName: 'init',
         args: {
@@ -253,13 +232,13 @@ async function main() {
         },
         gas: GAS,
     });
+    console.log('initRes', initRes);
 
-    console.log('contract init result', initRes.status.SuccessValue === '');
     await sleep(1000);
 
     // NEEDS TO MATCH docker-compose.yaml shade-agent-api-image
     account = getAccount(accountId);
-    const approveApiRes = await account.functionCall({
+    const approveApiRes = await account.callFunction({
         contractId,
         methodName: 'approve_codehash',
         args: {
@@ -267,17 +246,14 @@ async function main() {
         },
         gas: GAS,
     });
+    console.log('approveApiRes', approveApiRes);
 
-    console.log(
-        'api approve_codehash result',
-        approveApiRes.status.SuccessValue === '',
-    );
     await sleep(1000);
 
     if (IS_SANDBOX) {
         // NEEDS TO MATCH docker-compose.yaml shade-agent-app-image
         account = getAccount(accountId);
-        const approveAppRes = await account.functionCall({
+        const approveAppRes = await account.callFunction({
             contractId,
             methodName: 'approve_codehash',
             args: {
@@ -285,11 +261,7 @@ async function main() {
             },
             gas: GAS,
         });
-
-        console.log(
-            'app approve_codehash result',
-            approveAppRes.status.SuccessValue === '',
-        );
+        console.log('approveAppRes', approveAppRes);
 
         /**
          * Deploy on Phala
