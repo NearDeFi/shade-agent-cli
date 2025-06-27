@@ -1,84 +1,20 @@
 #!/usr/bin/env node
 
-const dir = process.cwd();
 
-/**
- * Setup and docs for commander here
- */
-
-import { program } from 'commander';
-program.option('-w, --wasm <string>', 'wasm path to deploy custom contract');
-program.parse();
-const options = program.opts();
-// deploy the contract bytes NOT the global contract if this is set... to any valid wasm file
-const WASM_PATH = options.wasm;
-/**
- * Continue regular imports
- */
-
-import * as dotenv from 'dotenv';
-if (process.env.NODE_ENV !== 'production') {
-    // will load for browser and backend
-    dotenv.config({ path: `${dir}/.env.development.local` });
-} else {
-    // load .env in production
-    dotenv.config();
-}
-
+import { initializeOptions } from './options.js';
 import fs from 'fs';
 import { readFileSync, writeFileSync } from 'fs';
 import { spawn, execSync } from 'child_process';
-import { parseSeedPhrase } from 'near-seed-phrase';
-import { KeyPairSigner } from '@near-js/signers';
-import { JsonRpcProvider } from "@near-js/providers";
 import { Account } from "@near-js/accounts";
-import { NEAR } from "@near-js/tokens";
-import { KeyPair } from "@near-js/crypto";
 import bs58 from 'bs58';
+import { contractId, IS_SANDBOX, API_CODEHASH, PHALA_API_KEY, accountId, GLOBAL_CONTRACT_HASH, FUNDING_AMOUNT, GAS, DOCKER_TAG, WASM_PATH, provider, signer, keyPair } from './config.js';
 
-if (!process.env.NEXT_PUBLIC_contractId) {
-    console.log('env var: NEXT_PUBLIC_contractId not found');
-    process.exit(-1);
-}
 
-const _contractId = process.env.NEXT_PUBLIC_contractId.replaceAll('"', '');
-export const contractId = _contractId;
-
-const IS_SANDBOX = /sandbox/gim.test(contractId);
-
-const PHALA_API_KEY = process.env.PHALA_API_KEY;
-
-// default codehash is "proxy" for local development, contract will NOT verify anything in register_worker
-const API_CODEHASH = process.env.API_CODEHASH || 'api';
-const APP_CODEHASH = process.env.APP_CODEHASH || 'proxy';
-const GLOBAL_CONTRACT_HASH = IS_SANDBOX
-    ? '31x2yS1DZHUjMQQFXPBjbfojb4FQ8pBaER39YoReTpJb'
-    : '2pSLLgLnAM9PYD7Rj6SpdK9tJRz48GQ7GrnAXK6tmm8u';
-const FUNDING_AMOUNT = WASM_PATH ? NEAR.toUnits('5') : NEAR.toUnits('1');
-const GAS = BigInt('300000000000000');
-
-// local vars for module
-export const networkId = /testnet/gi.test(contractId) ? 'testnet' : 'mainnet';
-// setup keystore, set funding account and key
-let _accountId = process.env.NEAR_ACCOUNT_ID.replaceAll('"', '');
-// console.log('accountId, contractId', _accountId, _contractId);
-const { secretKey } = parseSeedPhrase(
-    process.env.NEAR_SEED_PHRASE.replaceAll('"', ''),
-);
-const keyPair = KeyPair.fromString(secretKey);
-const signer = new KeyPairSigner(keyPair);
-
-const provider = new JsonRpcProvider({ 
-    url: networkId === 'testnet' 
-        ? "https://test.rpc.fastnear.com" 
-        : "https://free.rpc.fastnear.com" 
-});
+// Setup CLI options
+initializeOptions();
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-export const getAccount = (id = _accountId) => new Account(id, provider, signer);
-
-// output CLI options before calling main
-console.log('CLI OPTIONS SET:\n\n', options, '\n\n');
+export const getAccount = (id = accountId) => new Account(id, provider, signer);
 
 async function main() {
     // restart docker service and all networking
@@ -107,7 +43,7 @@ async function main() {
         console.log('docker building image...');
         try {
             execSync(
-                `sudo docker build --no-cache --platform=linux/amd64 -t ${process.env.DOCKER_TAG}:latest .`,
+                `sudo docker build --no-cache --platform=linux/amd64 -t ${DOCKER_TAG}:latest .`,
             );
         } catch (e) {
             console.log('Error docker build', e);
@@ -120,7 +56,7 @@ async function main() {
         console.log('docker pushing image...');
         try {
             const output = execSync(
-                `sudo docker push ${process.env.DOCKER_TAG}`,
+                `sudo docker push ${DOCKER_TAG}`,
             );
             NEW_APP_CODEHASH = output
                 .toString()
@@ -164,7 +100,7 @@ async function main() {
             data =
                 data.slice(0, lastIndex) +
                 `image: ` +
-                process.env.DOCKER_TAG +
+                DOCKER_TAG +
                 data.slice(index);
             writeFileSync(path, data, 'utf8');
         } catch (e) {
@@ -177,7 +113,6 @@ async function main() {
      * Deploying Global Contract
      */
 
-    const accountId = _accountId;
     try {
         const account = getAccount(contractId);
         await account.deleteAccount(accountId);
@@ -224,7 +159,7 @@ async function main() {
     console.log('contract deployed:', contractId);
     await sleep(1000);
 
-    const initRes = await account.callFunction({
+    const initRes = await account.functionCall({
         contractId,
         methodName: 'init',
         args: {
@@ -232,13 +167,13 @@ async function main() {
         },
         gas: GAS,
     });
-    console.log('initRes', initRes);
+    console.log('Contract init result', initRes.status.SuccessValue === '');
 
     await sleep(1000);
 
     // NEEDS TO MATCH docker-compose.yaml shade-agent-api-image
     account = getAccount(accountId);
-    const approveApiRes = await account.callFunction({
+    const approveApiRes = await account.functionCall({
         contractId,
         methodName: 'approve_codehash',
         args: {
@@ -246,14 +181,14 @@ async function main() {
         },
         gas: GAS,
     });
-    console.log('approveApiRes', approveApiRes);
+    console.log('Approve API codehash result', approveApiRes.status.SuccessValue === '');
 
     await sleep(1000);
 
     if (IS_SANDBOX) {
         // NEEDS TO MATCH docker-compose.yaml shade-agent-app-image
         account = getAccount(accountId);
-        const approveAppRes = await account.callFunction({
+        const approveAppRes = await account.functionCall({
             contractId,
             methodName: 'approve_codehash',
             args: {
@@ -261,7 +196,7 @@ async function main() {
             },
             gas: GAS,
         });
-        console.log('approveAppRes', approveAppRes);
+        console.log('Approve App codehash result', approveAppRes.status.SuccessValue === '');
 
         /**
          * Deploy on Phala
@@ -276,7 +211,7 @@ async function main() {
         }
 
         console.log('deploying to Phala Cloud...');
-        const appNameSplit = process.env.DOCKER_TAG.split('/');
+        const appNameSplit = DOCKER_TAG.split('/');
         const appName = appNameSplit[appNameSplit.length - 1];
         try {
             execSync(
