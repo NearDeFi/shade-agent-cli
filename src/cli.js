@@ -1,20 +1,16 @@
 #!/usr/bin/env node
 
-
 import { initializeOptions } from './options.js';
 import fs from 'fs';
 import { readFileSync, writeFileSync } from 'fs';
 import { spawn, execSync } from 'child_process';
-import { Account } from "@near-js/accounts";
 import bs58 from 'bs58';
-import { contractId, IS_SANDBOX, API_CODEHASH, PHALA_API_KEY, accountId, GLOBAL_CONTRACT_HASH, FUNDING_AMOUNT, GAS, DOCKER_TAG, WASM_PATH, provider, signer, keyPair } from './config.js';
-
+import { contractId, IS_SANDBOX, API_CODEHASH, PHALA_API_KEY, GLOBAL_CONTRACT_HASH, FUNDING_AMOUNT, GAS, DOCKER_TAG, WASM_PATH, masterAccount, contractAccount} from './config.js';
 
 // Setup CLI options
 initializeOptions();
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-export const getAccount = (id = accountId) => new Account(id, provider, signer);
 
 async function main() {
     // restart docker service and all networking
@@ -114,8 +110,7 @@ async function main() {
      */
 
     try {
-        const account = getAccount(contractId);
-        await account.deleteAccount(accountId);
+        await contractAccount.deleteAccount(masterAccount.accountId);
     } catch (e) {
         console.log('error deleteAccount', e);
     }
@@ -124,10 +119,9 @@ async function main() {
     await sleep(1000);
 
     try {
-        const account = getAccount(accountId);
-        await account.createAccount(
+        await masterAccount.createAccount(
             contractId,
-            keyPair.getPublicKey(),
+            await masterAccount.getSigner().getPublicKey(),
             FUNDING_AMOUNT,
         );
     } catch (e) {
@@ -137,20 +131,19 @@ async function main() {
     console.log('contract account created:', contractId);
     await sleep(1000);
 
-    let account = getAccount(contractId);
     if (WASM_PATH) {
         // deploys the contract bytes (original method and requires more funding)
         const file = fs.readFileSync(WASM_PATH);
-        await account.deployContract(file);
+        await contractAccount.deployContract(file);
         console.log('deployed bytes', file.byteLength);
-        const balance = await account.getBalance();
+        const balance = await contractAccount.getBalance();
         console.log('contract balance', balance);
     } else {
         // deploys global contract using near-js
         try {
             // convert base58 to hex
             const hexHash = Buffer.from(bs58.decode(GLOBAL_CONTRACT_HASH)).toString('hex');
-            await account.useGlobalContract({codeHash: hexHash});
+            await contractAccount.useGlobalContract({codeHash: hexHash});
         } catch (e) {
             console.log('Error deploying global contract', e);
         }
@@ -159,11 +152,11 @@ async function main() {
     console.log('contract deployed:', contractId);
     await sleep(1000);
 
-    const initRes = await account.functionCall({
+    const initRes = await contractAccount.functionCall({
         contractId,
         methodName: 'init',
         args: {
-            owner_id: accountId,
+            owner_id: masterAccount.accountId,
         },
         gas: GAS,
     });
@@ -172,8 +165,7 @@ async function main() {
     await sleep(1000);
 
     // NEEDS TO MATCH docker-compose.yaml shade-agent-api-image
-    account = getAccount(accountId);
-    const approveApiRes = await account.functionCall({
+    const approveApiRes = await masterAccount.functionCall({
         contractId,
         methodName: 'approve_codehash',
         args: {
@@ -187,8 +179,7 @@ async function main() {
 
     if (IS_SANDBOX) {
         // NEEDS TO MATCH docker-compose.yaml shade-agent-app-image
-        account = getAccount(accountId);
-        const approveAppRes = await account.functionCall({
+        const approveAppRes = await masterAccount.functionCall({
             contractId,
             methodName: 'approve_codehash',
             args: {
@@ -231,7 +222,7 @@ async function main() {
             'running shade-agent-api in docker locally at http://localhost:3140',
         );
         try {
-            const child = spawn(
+            spawn(
                 `sudo`,
                 `docker run -p 0.0.0.0:3140:3140 --platform=linux/amd64 --env-file .env.development.local --rm -e PORT=3140 mattdlockyer/shade-agent-api@sha256:${API_CODEHASH}`.split(
                     ' ',

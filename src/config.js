@@ -2,9 +2,9 @@ import * as dotenv from 'dotenv';
 import { NEAR } from "@near-js/tokens";
 import { parseSeedPhrase } from 'near-seed-phrase';
 import { getOptions } from './options.js';
-import { KeyPair } from "@near-js/crypto";
 import { KeyPairSigner } from '@near-js/signers';
 import { JsonRpcProvider } from "@near-js/providers";
+import { Account } from "@near-js/accounts";
 
 if (process.env.NODE_ENV !== 'production') {
     // will load for browser and backend
@@ -52,11 +52,12 @@ export const GAS = BigInt('300000000000000');
 
 
 // NEAR configuration and signer
-export const networkId = /testnet/gi.test(contractId) ? 'testnet' : 'mainnet';
-export const keyPair = KeyPair.fromString(secretKey);
-export const signer = new KeyPairSigner(keyPair);
-export const provider = new JsonRpcProvider({ 
+const networkId = /testnet/gi.test(contractId) ? 'testnet' : 'mainnet';
+const signer = KeyPairSigner.fromSecretKey(secretKey);
+const provider = new JsonRpcProvider({ 
     url: networkId === 'testnet' 
         ? "https://test.rpc.fastnear.com" 
         : "https://free.rpc.fastnear.com" 
-    });
+});
+export const masterAccount = new Account(accountId, provider, signer);
+export const contractAccount = new Account(contractId, provider, signer);
