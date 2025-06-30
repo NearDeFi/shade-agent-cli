@@ -1,5 +1,4 @@
 import { execSync } from 'child_process';
-import { spawn } from 'child_process';
 
 export function loginToPhala(phalaApiKey) {
     console.log('logging in to Phala Cloud...');
@@ -26,28 +25,6 @@ export function deployToPhala(dockerTag) {
         return true;
     } catch (e) {
         console.log('Error deploying to Phala Cloud', e);
-        return false;
-    }
-}
-
-export function runApiLocally(apiCodehash) {
-    console.log(
-        'running shade-agent-api in docker locally at http://localhost:3140',
-    );
-    try {
-        spawn(
-            `sudo`,
-            `docker run -p 0.0.0.0:3140:3140 --platform=linux/amd64 --env-file .env.development.local --rm -e PORT=3140 mattdlockyer/shade-agent-api@sha256:${apiCodehash}`.split(
-                ' ',
-            ),
-            {
-                cwd: process.cwd(),
-                stdio: 'inherit',
-            },
-        );
-        return true;
-    } catch (e) {
-        console.log('Error running API locally', e);
         return false;
     }
 }

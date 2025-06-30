@@ -1,21 +1,32 @@
 import { execSync } from 'child_process';
 import { readFileSync, writeFileSync } from 'fs';
+import { spawn } from 'child_process';
 
-export function restartDocker() {
-    console.log('docker restarting...');
+export function stopContainer() {
+    console.log('stopping container on port 3140...');
     if (process.platform === 'darwin') {
         try {
-            execSync(`docker restart $(docker ps -q)`);
-            console.log('docker restarted');
+            const containerId = execSync(`docker ps -q --filter "publish=3140"`, { encoding: 'utf8' }).trim();
+            if (containerId) {
+                execSync(`docker stop ${containerId}`);
+                console.log(`stopped container ${containerId} on port 3140`);
+            } else {
+                console.log('no container found on port 3140');
+            }
         } catch (e) {
-            console.warn('WARNING: Error restarting docker service');
+            console.warn('WARNING: Error stopping container on port 3140');
         }
     } else {
         try {
-            execSync(`sudo systemctl restart docker`);
-            console.log('docker restarted');
+            const containerId = execSync(`sudo docker ps -q --filter "publish=3140"`, { encoding: 'utf8' }).trim();
+            if (containerId) {
+                execSync(`sudo docker stop ${containerId}`);
+                console.log(`stopped container ${containerId} on port 3140`);
+            } else {
+                console.log('no container found on port 3140');
+            }
         } catch (e) {
-            console.warn('WARNING: Error restarting docker service');
+            console.warn('WARNING: Error stopping container on port 3140');
         }
     }
 }
@@ -24,7 +35,7 @@ export function buildImage(dockerTag) {
     console.log('docker building image...');
     try {
         execSync(
-            `sudo docker build --no-cache --platform=linux/amd64 -t ${dockerTag}:latest .`,
+            `docker build --no-cache --platform=linux/amd64 -t ${dockerTag}:latest .`,
         );
         console.log('docker image built');
         return true;
@@ -38,7 +49,7 @@ export function pushImage(dockerTag) {
     console.log('docker pushing image...');
     try {
         const output = execSync(
-            `sudo docker push ${dockerTag}`,
+            `docker push ${dockerTag}`,
         );
         const newAppCodehash = output
             .toString()
@@ -119,4 +130,61 @@ export function dockerImage(dockerTag) {
     }
 
     return newAppCodehash;
+}
+
+export function runApiLocally(apiCodehash) {
+    stopContainer();
+
+    let childProcess;
+    try {
+        let command, args;
+        
+        if (process.platform === 'darwin') {
+            command = 'docker';
+            args = [
+                'run',
+                '-p', '0.0.0.0:3140:3140',
+                '--platform=linux/amd64',
+                '--env-file', '.env.development.local',
+                '--rm',
+                '-e', 'PORT=3140',
+                `mattdlockyer/shade-agent-api@sha256:${apiCodehash}`
+            ];
+        } else {
+            command = 'sudo';
+            args = [
+                'docker',
+                'run',
+                '-p', '0.0.0.0:3140:3140',
+                '--platform=linux/amd64',
+                '--env-file', '.env.development.local',
+                '--rm',
+                '-e', 'PORT=3140',
+                `mattdlockyer/shade-agent-api@sha256:${apiCodehash}`
+            ];
+        }
+        
+        childProcess = spawn(command, args, {
+            cwd: process.cwd(),
+            stdio: 'inherit',
+        });
+        
+        // Handle shutdown signals to stop the container
+        const cleanup = () => {
+            console.log('\nStopping container...');
+            if (childProcess) {
+                childProcess.kill('SIGTERM');
+            }
+            stopContainer();
+            process.exit(0);
+        };
+        
+        process.on('SIGINT', cleanup);
+        process.on('SIGTERM', cleanup);
+        
+        return true;
+    } catch (e) {
+        console.log('Error running API locally', e);
+        return false;
+    }
 }

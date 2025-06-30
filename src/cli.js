@@ -2,17 +2,14 @@
 
 import { initializeOptions } from './options.js';
 import { contractId, IS_SANDBOX, API_CODEHASH, PHALA_API_KEY, GLOBAL_CONTRACT_HASH, FUNDING_AMOUNT, GAS, DOCKER_TAG, WASM_PATH, masterAccount, contractAccount} from './config.js';
-import { restartDocker, dockerImage } from './docker.js';
+import { dockerImage, runApiLocally } from './docker.js';
 import { createAccount, deployCustomContract, deployGlobalContract, initContract, approveCodehash } from './near.js';
-import { deployPhalaWorkflow, runApiLocally } from './phala.js';
+import { deployPhalaWorkflow } from './phala.js';
 
 // Setup CLI options
 initializeOptions();
 
 async function main() {
-    // restart docker service and all networking
-    restartDocker();
-
     // Build and push docker image if in sandbox mode
     let NEW_APP_CODEHASH;
     if (IS_SANDBOX) {
