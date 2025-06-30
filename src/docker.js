@@ -3,6 +3,7 @@ import { readFileSync, writeFileSync } from 'fs';
 import { spawn } from 'child_process';
 
 export function stopContainer() {
+    // Stops the container on port 3140
     console.log('stopping container on port 3140...');
     if (process.platform === 'darwin') {
         try {
@@ -32,6 +33,7 @@ export function stopContainer() {
 }
 
 export function buildImage(dockerTag) {
+    // Builds the image
     console.log('docker building image...');
     try {
         execSync(
@@ -46,6 +48,7 @@ export function buildImage(dockerTag) {
 }
 
 export function pushImage(dockerTag) {
+    // Pushes the image to docker hub
     console.log('docker pushing image...');
     try {
         const output = execSync(
@@ -64,6 +67,7 @@ export function pushImage(dockerTag) {
 }
 
 export function replaceInEnvFile(codehash) {
+    // Replaces the codehash in the .env.development.local file
     try {
         const path = '.env.development.local';
         const data = readFileSync(path).toString();
@@ -85,6 +89,7 @@ export function replaceInEnvFile(codehash) {
 }
 
 export function replaceInYaml(dockerTag, codehash) {
+    // Replaces the codehash in the docker-compose.yaml file
     try {
         const path = 'docker-compose.yaml';
         let data = readFileSync(path).toString();
@@ -108,23 +113,23 @@ export function replaceInYaml(dockerTag, codehash) {
 }
 
 export function dockerImage(dockerTag) {
-    // Build the image
+    // Builds the image
     if (!buildImage(dockerTag)) {
         return null;
     }
 
-    // Push the image and get the new codehash
+    // Pushes the image and gets the new codehash
     const newAppCodehash = pushImage(dockerTag);
     if (!newAppCodehash) {
         return null;
     }
 
-    // Replace codehash in .env.development.local
+    // Replaces the codehash in the .env.development.local file
     if (!replaceInEnvFile(newAppCodehash)) {
         return null;
     }
 
-    // Replace codehash in docker-compose.yaml
+    // Replaces the codehash in the docker-compose.yaml file
     if (!replaceInYaml(dockerTag, newAppCodehash)) {
         return null;
     }
@@ -133,8 +138,10 @@ export function dockerImage(dockerTag) {
 }
 
 export function runApiLocally(apiCodehash) {
+    // Stops the container on port 3140
     stopContainer();
 
+    // Runs the API locally
     let childProcess;
     try {
         let command, args;
@@ -169,7 +176,7 @@ export function runApiLocally(apiCodehash) {
             stdio: 'inherit',
         });
         
-        // Handle shutdown signals to stop the container
+        // Handles shutdown signals to stop the container
         const cleanup = () => {
             console.log('\nStopping container...');
             if (childProcess) {

@@ -1,6 +1,7 @@
 import { execSync } from 'child_process';
 
 export function loginToPhala(phalaApiKey) {
+    // Logs in to Phala Cloud
     console.log('logging in to Phala Cloud...');
     try {
         execSync(`phala auth login ${phalaApiKey}`);
@@ -13,6 +14,7 @@ export function loginToPhala(phalaApiKey) {
 }
 
 export function deployToPhala(dockerTag) {
+    // Deploys the app to Phala Cloud
     console.log('deploying to Phala Cloud...');
     const appNameSplit = dockerTag.split('/');
     const appName = appNameSplit[appNameSplit.length - 1];
@@ -30,12 +32,12 @@ export function deployToPhala(dockerTag) {
 }
 
 export function deployPhalaWorkflow(phalaApiKey, dockerTag) {
-    // Login to Phala Cloud
+    // Logs in to Phala Cloud
     if (!loginToPhala(phalaApiKey)) {
         return false;
     }
 
-    // Deploy to Phala Cloud
+    // Deploys the app to Phala Cloud
     if (!deployToPhala(dockerTag)) {
         return false;
     }

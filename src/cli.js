@@ -10,7 +10,7 @@ import { deployPhalaWorkflow } from './phala.js';
 initializeOptions();
 
 async function main() {
-    // Build and push docker image if in sandbox mode
+    // Builds and pushes the docker image if in sandbox mode
     let NEW_APP_CODEHASH;
     if (IS_SANDBOX) {
         NEW_APP_CODEHASH = dockerImage(DOCKER_TAG);
@@ -19,32 +19,51 @@ async function main() {
         }
     }
 
-    // Create account for contract
-    await createAccount(contractId, masterAccount, contractAccount, FUNDING_AMOUNT);
-
-    // Deploy contract
-    if (WASM_PATH) {
-        await deployCustomContract(contractAccount, WASM_PATH);
-    } else { // Deploy global contract
-        await deployGlobalContract(contractAccount, GLOBAL_CONTRACT_HASH);
+    // Create an account for the contract
+    const accountCreated = await createAccount(contractId, masterAccount, contractAccount, FUNDING_AMOUNT);
+    if (!accountCreated) {
+        return;
     }
 
-    await initContract(contractAccount, contractId, masterAccount, GAS);
+    // Deploy the contract
+    let contractDeployed = false;
+    if (WASM_PATH) {
+        contractDeployed = await deployCustomContract(contractAccount, WASM_PATH);
+    } else { // Deploy global contract
+        contractDeployed = await deployGlobalContract(contractAccount, GLOBAL_CONTRACT_HASH);
+    }
+    if (!contractDeployed) {
+        return;
+    }
 
-    // NEEDS TO MATCH docker-compose.yaml shade-agent-api-image
-    await approveCodehash(masterAccount, contractId, API_CODEHASH, GAS);
+    // Initialize the contract
+    const contractInitialized = await initContract(contractAccount, contractId, masterAccount, GAS);
+    if (!contractInitialized) {
+        return;
+    }
 
+    // Approve the API codehash
+    const apiCodehashApproved = await approveCodehash(masterAccount, contractId, API_CODEHASH, GAS);
+    if (!apiCodehashApproved) {
+        return;
+    }
+
+    // Approve the app codehash
     if (IS_SANDBOX) {
-        // NEEDS TO MATCH docker-compose.yaml shade-agent-app-image
-        await approveCodehash(masterAccount, contractId, NEW_APP_CODEHASH, GAS);
+        const appCodehashApproved = await approveCodehash(masterAccount, contractId, NEW_APP_CODEHASH, GAS);
+        if (!appCodehashApproved) {
+            return;
+        }
 
-        // Deploy to Phala Cloud
+        // Deploy the app to Phala Cloud
         if (!deployPhalaWorkflow(PHALA_API_KEY, DOCKER_TAG)) {
             return;
         }
     } else {
-        // Run API locally
-        runApiLocally(API_CODEHASH);
+        // Run the API locally
+        if (!runApiLocally(API_CODEHASH)) {
+            return;
+        }
     }
 }
 
