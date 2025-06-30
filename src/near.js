@@ -1,9 +1,12 @@
 import fs from 'fs';
 import bs58 from 'bs58';
 
+const GAS = BigInt('30000000000000');
+
+// Sleep for the specified number of milliseconds
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
-export async function createAccount(contractId, masterAccount, contractAccount, fundingAmount) {
+export async function createAccount(contractId, masterAccount, contractAccount) {
     // Check if the contract account exists and delete it if it does
     try {
         await contractAccount.getBalance();
@@ -27,7 +30,7 @@ export async function createAccount(contractId, masterAccount, contractAccount, 
         await masterAccount.createAccount(
             contractId,
             await masterAccount.getSigner().getPublicKey(),
-            fundingAmount,
+            FUNDING_AMOUNT,
         );
         console.log('contract account created:', contractId);
         await sleep(1000);
@@ -69,7 +72,7 @@ export async function deployGlobalContract(contractAccount, globalContractHash) 
     }
 }
 
-export async function initContract(contractAccount, contractId, masterAccount, gas) {
+export async function initContract(contractAccount, contractId, masterAccount) {
     // Initializes the contract
     try {
         const initRes = await contractAccount.functionCall({
@@ -78,7 +81,7 @@ export async function initContract(contractAccount, contractId, masterAccount, g
             args: {
                 owner_id: masterAccount.accountId,
             },
-            gas: gas,
+            gas: GAS,
         });
         console.log('Contract init result', initRes.status.SuccessValue === '');
         await sleep(1000);
@@ -89,7 +92,7 @@ export async function initContract(contractAccount, contractId, masterAccount, g
     }
 }
 
-export async function approveCodehash(masterAccount, contractId, codehash, gas) {
+export async function approveCodehash(masterAccount, contractId, codehash) {
     // Approves the specified codehash
     try {
         const approveRes = await masterAccount.functionCall({
@@ -98,7 +101,7 @@ export async function approveCodehash(masterAccount, contractId, codehash, gas) 
             args: {
                 codehash: codehash,
             },
-            gas: gas,
+            gas: GAS,
         });
         console.log('Approve codehash result', approveRes.status.SuccessValue === '');
         await sleep(1000);

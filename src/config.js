@@ -1,10 +1,13 @@
 import * as dotenv from 'dotenv';
-import { NEAR } from "@near-js/tokens";
 import { parseSeedPhrase } from 'near-seed-phrase';
-import { getOptions } from './options.js';
 import { KeyPairSigner } from '@near-js/signers';
 import { JsonRpcProvider } from "@near-js/providers";
 import { Account } from "@near-js/accounts";
+import { getOptions } from './options.js';
+import { NEAR } from "@near-js/tokens";
+
+// Get the options
+const options = getOptions();
 
 if (process.env.NODE_ENV !== 'production') {
     // will load for browser and backend
@@ -44,20 +47,26 @@ export const GLOBAL_CONTRACT_HASH = IS_SANDBOX
     ? '31x2yS1DZHUjMQQFXPBjbfojb4FQ8pBaER39YoReTpJb'
     : '2pSLLgLnAM9PYD7Rj6SpdK9tJRz48GQ7GrnAXK6tmm8u';
 
-
-const options = getOptions();
-export const WASM_PATH = options.wasm;
-export const FUNDING_AMOUNT = WASM_PATH ? NEAR.toUnits('5') : NEAR.toUnits('1');
-export const GAS = BigInt('300000000000000');
-
-
 // NEAR configuration and signer
 const networkId = /testnet/gi.test(contractId) ? 'testnet' : 'mainnet';
 const signer = KeyPairSigner.fromSecretKey(secretKey);
+
+// Sets the RPC endpoint depending on the network and the options
 const provider = new JsonRpcProvider({ 
-    url: networkId === 'testnet' 
+    url: options.rpc || (networkId === 'testnet' 
         ? "https://test.rpc.fastnear.com" 
-        : "https://free.rpc.fastnear.com" 
+        : "https://free.rpc.fastnear.com") 
 });
+
 export const masterAccount = new Account(accountId, provider, signer);
 export const contractAccount = new Account(contractId, provider, signer);
+
+// Get the funding amount from the options
+let FUNDING_AMOUNT;
+if (options.funding) {
+    FUNDING_AMOUNT = options.funding;
+} else if (options.wasm) {
+    FUNDING_AMOUNT = NEAR.toUnits('5');
+} else {
+    FUNDING_AMOUNT = NEAR.toUnits('1');
+}
