@@ -20,10 +20,11 @@ export function deployToPhala(dockerTag) {
     const appName = appNameSplit[appNameSplit.length - 1];
     
     try {
-        execSync(
+        const result = execSync(
             `phala cvms create --name ${appName} --vcpu 1 --compose ./docker-compose.yaml --env-file ./.env.development.local`,
         );
         console.log('deployed to Phala Cloud');
+        console.log(result);
         return true;
     } catch (e) {
         console.log('Error deploying to Phala Cloud', e);

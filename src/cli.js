@@ -20,14 +20,14 @@ async function main() {
         }
     }
 
-    // Create an account for the contract
-    const accountCreated = await createAccount(contractId, masterAccount, contractAccount);
-    if (!accountCreated) {
-        return;
-    }
-
     // Deploy the contract
-    if (!options.noRedeploy) {
+    if (!options.noDeploy) {
+        // Create an account for the contract
+        const accountCreated = await createAccount(contractId, masterAccount, contractAccount);
+        if (!accountCreated) {
+            return;
+        }
+
         let contractDeployed = false;
         if (options.wasm) {
             contractDeployed = await deployCustomContract(contractAccount, options.wasm);
@@ -41,7 +41,7 @@ async function main() {
 
     // Initialize the contract and approve codehashes
     if (!options.noInit) {
-        if (!options.noRedeploy) {
+        if (!options.noDeploy) {
             // Initialize the contract
             const contractInitialized = await initContract(contractAccount, contractId, masterAccount);
             if (!contractInitialized) {

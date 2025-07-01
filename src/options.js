@@ -10,7 +10,7 @@ function setupOptions() {
     program.option('-b, --no-build', 'Skip building and pushing the docker image');
     program.option('-i, --no-init', 'Skip initializing the contract and approving codehashes');
     program.option('-p, --no-phala', 'Skip deploying the app to Phala Cloud');
-    program.option('-d, --no-redeploy', 'Skip redeploying the contract');
+    program.option('-d, --no-deploy', 'Skip deploying the contract');
     
     return program;
 }

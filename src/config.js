@@ -18,19 +18,37 @@ if (process.env.NODE_ENV !== 'production') {
     dotenv.config();
 }
 
-if (!process.env.NEXT_PUBLIC_contractId || !process.env.PHALA_API_KEY || !process.env.API_CODEHASH || !process.env.NEAR_ACCOUNT_ID || !process.env.NEAR_SEED_PHRASE) {
-    console.log('Make sure you have set the following env vars: NEXT_PUBLIC_contractId, PHALA_API_KEY, API_CODEHASH, NEAR_ACCOUNT_ID, NEAR_SEED_PHRASE');
+if (!process.env.NEAR_ACCOUNT_ID) {
+    console.log('Make sure you have set the following env vars: NEAR_ACCOUNT_ID');
     process.exit(-1);
 }
+export const accountId = process.env.NEAR_ACCOUNT_ID;
 
-export const contractId = process.env.NEXT_PUBLIC_contractId.replaceAll('"', '');
-export const PHALA_API_KEY = process.env.PHALA_API_KEY.replaceAll('"', '');
-export const API_CODEHASH = process.env.API_CODEHASH.replaceAll('"', '');
-export const accountId = process.env.NEAR_ACCOUNT_ID.replaceAll('"', '');
-export const DOCKER_TAG = process.env.DOCKER_TAG.replaceAll('"', '');
+if (!process.env.NEAR_SEED_PHRASE) {
+    console.log('Make sure you have set the following env vars: NEAR_SEED_PHRASE');
+    process.exit(-1);
+}
 export const { secretKey } = parseSeedPhrase(
-    process.env.NEAR_SEED_PHRASE.replaceAll('"', '')
+    process.env.NEAR_SEED_PHRASE
 );
+
+if (!process.env.NEXT_PUBLIC_contractId) {
+    console.log('Make sure you have set the following env vars: NEXT_PUBLIC_contractId');
+    process.exit(-1);
+}
+export const contractId = process.env.NEXT_PUBLIC_contractId;
+
+if (!process.env.API_CODEHASH) {
+    console.log('Make sure you have set the following env vars: API_CODEHASH');
+    process.exit(-1);
+}
+export const API_CODEHASH = process.env.API_CODEHASH;
+
+if (!process.env.DOCKER_TAG) {
+    console.log('Make sure you have set the following env vars: DOCKER_TAG');
+    process.exit(-1);
+}
+export const DOCKER_TAG = process.env.DOCKER_TAG;
 
 // Set IS_SANDBOX to true if the contract ID prefix is 'ac-sandbox'
 // If the contract ID prefix is 'ac-proxy', set IS_SANDBOX to false
@@ -41,6 +59,14 @@ if (!['ac-sandbox', 'ac-proxy'].includes(prefix)) {
     process.exit(1);
 }
 export const IS_SANDBOX = prefix === 'ac-sandbox';
+
+if (IS_SANDBOX && !options.noPhala) { // Don't require PHALA_API_KEY if in local or if noPhala is turned on
+    if (!process.env.PHALA_API_KEY) {
+        console.log('Make sure you have set the following env vars: PHALA_API_KEY');
+        process.exit(-1);
+    }
+}
+export const PHALA_API_KEY = process.env.PHALA_API_KEY;
 
 // Hash of the global contract for sandbox or proxy
 export const GLOBAL_CONTRACT_HASH = IS_SANDBOX
