@@ -9,10 +9,10 @@ try {
 }
 
 export function loginToPhala(phalaApiKey) {
-    // Logs in to Phala Cloud
+    // Logs in to Phala Cloud using local phala package
     console.log('logging in to Phala Cloud...');
     try {
-        execSync(`phala auth login ${phalaApiKey}`);
+        execSync(`npx phala auth login ${phalaApiKey}`);
         console.log('Successfully logged in to Phala Cloud');
         return true;
     } catch (e) {
@@ -22,14 +22,14 @@ export function loginToPhala(phalaApiKey) {
 }
 
 export function deployToPhala(dockerTag) {
-    // Deploys the app to Phala Cloud
+    // Deploys the app to Phala Cloud using local phala package
     console.log('deploying to Phala Cloud...');
     const appNameSplit = dockerTag.split('/');
     const appName = appNameSplit[appNameSplit.length - 1];
     
     try {
         const result = execSync(
-            `phala cvms create --name ${appName} --vcpu 1 --compose ./docker-compose.yaml --env-file ./.env.development.local`,
+            `npx phala cvms create --name ${appName} --vcpu 1 --compose ./docker-compose.yaml --env-file ./.env.development.local`,
             { encoding: 'utf-8' }
         );
         console.log('deployed to Phala Cloud');
@@ -117,14 +117,11 @@ export async function deployPhalaWorkflow(phalaApiKey, dockerTag) {
         return false;
     }
 
-    // Deploys the app to Phala Cloud
+    // // Deploys the app to Phala Cloud
     const appId = deployToPhala(dockerTag);
     if (!appId) {
         return false;
     }
-
-    // // Get the CVM network info
-    // await getCvmNetworkInfo(appId, phalaApiKey);
 
     return appId;
 }

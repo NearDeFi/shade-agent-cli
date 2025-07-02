@@ -15,7 +15,8 @@
         "bs58": "^6.0.0",
         "commander": "^14.0.0",
         "dotenv": "^16.5.0",
-        "near-seed-phrase": "^0.2.1"
+        "near-seed-phrase": "^0.2.1",
+        "phala": "^1.0.15"
     },
     "bin": {
         "shade-agent-cli": "cli.js"
@@ -35,7 +36,6 @@
         "url": "https://github.com/NearDeFi/shade-agent-cli/issues"
     },
     "homepage": "https://github.com/NearDeFi/shade-agent-cli#readme",
-    "devDependencies": {},
     "scripts": {
         "build": "rm -rf dist && mkdir dist && cp cli.js ./dist/cli.js && cp package.json ./dist/package.json"
     }
