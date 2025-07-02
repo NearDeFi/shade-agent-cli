@@ -2,7 +2,7 @@
 import { contractId, IS_SANDBOX, API_CODEHASH, APP_CODEHASH, PHALA_API_KEY, GLOBAL_CONTRACT_HASH, DOCKER_TAG, masterAccount, contractAccount} from './config.js';
 import { dockerImage, runApiLocally } from './docker.js';
 import { createAccount, deployCustomContract, deployGlobalContract, initContract, approveCodehash } from './near.js';
-import { deployPhalaWorkflow } from './phala.js';
+import { deployPhalaWorkflow, getAppUrl } from './phala.js';
 import { getOptions } from './options.js';
 
 // Get CLI options
@@ -10,8 +10,12 @@ const options = getOptions();
 
 async function main() {
     if (options.phalaOnly) {
-        if (!deployPhalaWorkflow(PHALA_API_KEY, DOCKER_TAG)) {
+        const appId = await deployPhalaWorkflow(PHALA_API_KEY, DOCKER_TAG);
+        if (!appId) {
             return;
+        }
+        if (options.endpoint) {
+            await getAppUrl(appId, PHALA_API_KEY);
         }
         return;
     }
@@ -74,8 +78,12 @@ async function main() {
         
         if (options.phala) {
             // Deploy the app to Phala Cloud
-            if (!deployPhalaWorkflow(PHALA_API_KEY, DOCKER_TAG)) {
+            const appId = await deployPhalaWorkflow(PHALA_API_KEY, DOCKER_TAG);
+            if (!appId) {
                 return;
+            }
+            if (options.endpoint) {
+                await getAppUrl(appId, PHALA_API_KEY);
             }
         }
     } else {

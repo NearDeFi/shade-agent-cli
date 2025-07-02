@@ -15,8 +15,8 @@ function setupOptions() {
 
         // Flags with --no prefix are true by default if not specified
         .option('-b, --no-build', 'Skip building and pushing the Docker image')
-        .option('-p, --no-phala', 'Skip deploying the app to Phala Cloud');
-    
+        .option('-p, --no-phala', 'Skip deploying the app to Phala Cloud')
+        .option('-e, --no-endpoint', 'Skip printing the endpoint of the app');
 
     return program;
 }
