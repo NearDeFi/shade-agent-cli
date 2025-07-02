@@ -1,5 +1,6 @@
 import fs from 'fs';
 import bs58 from 'bs58';
+import { FUNDING_AMOUNT } from './config.js';
 
 const GAS = BigInt('30000000000000');
 
@@ -49,7 +50,7 @@ export async function deployCustomContract(contractAccount, wasmPath) {
         console.log('deployed bytes', file.byteLength);
         const balance = await contractAccount.getBalance();
         console.log('contract balance', balance);
-        console.log('Custom contract deployed:', contractId);
+        console.log('Custom contract deployed:', contractAccount.accountId);
         await sleep(1000);
         return true;
     } catch (e) {
