@@ -2,7 +2,7 @@
     "type": "module",
     "name": "@neardefi/shade-agent-cli",
     "version": "0.0.6",
-    "main": "cli.js",
+    "main": "src/cli.js",
     "author": "Matt Lockyer <github.com/mattlockyer>",
     "license": "MIT",
     "dependencies": {
@@ -19,7 +19,7 @@
         "phala": "^1.0.15"
     },
     "bin": {
-        "shade-agent-cli": "cli.js"
+        "shade-agent-cli": "src/cli.js"
     },
     "description": "This cli will help you launch shade agents",
     "repository": {
@@ -37,6 +37,6 @@
     },
     "homepage": "https://github.com/NearDeFi/shade-agent-cli#readme",
     "scripts": {
-        "build": "rm -rf dist && mkdir dist && cp cli.js ./dist/cli.js && cp package.json ./dist/package.json"
+        "build": "rm -rf dist && mkdir dist && cp package.json ./dist/package.json && cp -r src ./dist/src"
     }
 }

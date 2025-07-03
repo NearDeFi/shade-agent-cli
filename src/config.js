@@ -1,9 +1,10 @@
+import { getOptions, initializeOptions } from './options.js';
+import { readFileSync } from 'fs';
 import * as dotenv from 'dotenv';
 import { parseSeedPhrase } from 'near-seed-phrase';
 import { KeyPairSigner } from '@near-js/signers';
-import { JsonRpcProvider } from "@near-js/providers";
+import { JsonRpcProvider, FailoverRpcProvider } from "@near-js/providers";
 import { Account } from "@near-js/accounts";
-import { getOptions, initializeOptions } from './options.js';
 import { NEAR } from "@near-js/tokens";
 
 // Set up CLI options
@@ -87,18 +88,43 @@ export const GLOBAL_CONTRACT_HASH = IS_SANDBOX
 const networkId = /testnet/gi.test(contractId) ? 'testnet' : 'mainnet';
 const signer = KeyPairSigner.fromSecretKey(secretKey);
 
-// Sets the RPC endpoint depending on the network and the options
-const provider = new JsonRpcProvider(
-    { url: options.rpc || (networkId === 'testnet' 
-        ? "https://test.rpc.fastnear.com" 
-        : "https://free.rpc.fastnear.com") 
+// Sets the RPC provider
+let provider;
+
+const createDefaultProvider = () => new JsonRpcProvider(
+    {
+        url: networkId === 'testnet'
+            ? "https://test.rpc.fastnear.com"
+            : "https://free.rpc.fastnear.com"
     },
-    { 
+    {
         retries: 3,
         backoff: 2,
         wait: 1000,
     }
 );
+
+try {
+    const nearRpcProviders = readFileSync('./near-rpc.json', 'utf8');
+    const nearRpcProvidersJson = JSON.parse(nearRpcProviders);
+    if (nearRpcProvidersJson.nearRpcProviders) {
+        console.log('Using custom RPC providers');
+        const providers = nearRpcProvidersJson.nearRpcProviders.map(config =>
+            new JsonRpcProvider(
+                config.connectionInfo,
+                config.options || {}
+            )
+        );
+        provider = new FailoverRpcProvider(providers);
+    } else {
+        console.log('Using default RPC provider');
+        provider = createDefaultProvider();
+    }
+} catch (error) {
+    console.log('Using default RPC provider');
+    provider = createDefaultProvider();
+}
+
 
 export const masterAccount = new Account(accountId, provider, signer);
 export const contractAccount = new Account(contractId, provider, signer);

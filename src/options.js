@@ -7,7 +7,6 @@ function setupOptions() {
     program
         .option('-w, --wasm <string>', 'WASM path to deploy custom contract')
         .option('-f, --funding <string>', 'Funding amount for contract account in NEAR')
-        .option('-r, --rpc <string>', 'Select custom RPC endpoint')
 
         .option('-i, --image', 'Just build and push the Docker image')
         .option('-c, --contract', 'Build and push the Docker image, and deploy the contract')
