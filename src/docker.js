@@ -4,7 +4,7 @@ import { spawn } from 'child_process';
 
 export function stopContainer() {
     // Stops the container on port 3140
-    console.log('stopping container on port 3140...');
+    console.log('Stopping container on port 3140...');
     if (process.platform === 'darwin') {
         try {
             const containerId = execSync(`docker ps -q --filter "publish=3140"`, { encoding: 'utf8' }).trim();
@@ -34,22 +34,22 @@ export function stopContainer() {
 
 export function buildImage(dockerTag) {
     // Builds the image
-    console.log('docker building image...');
+    console.log('Building Docker image...');
     try {
         execSync(
             `docker build --no-cache --platform=linux/amd64 -t ${dockerTag}:latest .`,
         );
-        console.log('docker image built');
+        console.log('Docker image built');
         return true;
     } catch (e) {
-        console.log('Error docker build', e);
+        console.log('Error building Docker image', e);
         return false;
     }
 }
 
 export function pushImage(dockerTag) {
     // Pushes the image to docker hub
-    console.log('docker pushing image...');
+    console.log('Pushing Docker image...');
     try {
         const output = execSync(
             `docker push ${dockerTag}`,
@@ -58,10 +58,10 @@ export function pushImage(dockerTag) {
             .toString()
             .match(/sha256:[a-f0-9]{64}/gim)[0]
             .split('sha256:')[1];
-        console.log('docker image pushed');
+        console.log('Docker image pushed');
         return newAppCodehash;
     } catch (e) {
-        console.log('Error docker push', e);
+        console.log('Error pushing Docker image', e);
         return null;
     }
 }
@@ -77,7 +77,7 @@ export function replaceInEnvFile(codehash) {
             `APP_CODEHASH=${codehash}`,
         );
         writeFileSync(path, updated, 'utf8');
-        console.log('codehash replaced in .env.development.local');
+        console.log('Codehash replaced in .env.development.local');
         return true;
     } catch (e) {
         console.log(
@@ -104,10 +104,10 @@ export function replaceInYaml(dockerTag, codehash) {
             dockerTag +
             data.slice(index);
         writeFileSync(path, data, 'utf8');
-        console.log('codehash replaced in docker-compose.yaml');
+        console.log('Codehash replaced in docker-compose.yaml');
         return true;
     } catch (e) {
-        console.log('Error replacing codehash in docker-compose.yaml', e);
+        console.log('Error replacing codehash in docker-compose.yaml', e); 
         return false;
     }
 }
@@ -178,7 +178,7 @@ export function runApiLocally(apiCodehash) {
         
         // Handles shutdown signals to stop the container
         const cleanup = () => {
-            console.log('\nStopping container...');
+            console.log('Stopping container...');
             if (childProcess) {
                 childProcess.kill('SIGTERM');
             }

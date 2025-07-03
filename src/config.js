@@ -1,5 +1,5 @@
 import { getOptions, initializeOptions } from './options.js';
-import { readFileSync } from 'fs';
+import { readFileSync, writeFileSync } from 'fs';
 import * as dotenv from 'dotenv';
 import { parseSeedPhrase } from 'near-seed-phrase';
 import { KeyPairSigner } from '@near-js/signers';
@@ -21,13 +21,13 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 if (!process.env.NEAR_ACCOUNT_ID) {
-    console.log('Make sure you have set the following env vars: NEAR_ACCOUNT_ID');
+    console.log('Make sure you have set the NEAR_ACCOUNT_ID in .env.development.local');
     process.exit(1);
 }
 export const accountId = process.env.NEAR_ACCOUNT_ID;
 
 if (!process.env.NEAR_SEED_PHRASE) {
-    console.log('Make sure you have set the following env vars: NEAR_SEED_PHRASE');
+    console.log('Make sure you have set the NEAR_SEED_PHRASE in .env.development.local');
     process.exit(1);
 }
 export const { secretKey } = parseSeedPhrase(
@@ -35,20 +35,20 @@ export const { secretKey } = parseSeedPhrase(
 );
 
 if (!process.env.NEXT_PUBLIC_contractId) {
-    console.log('Make sure you have set the following env vars: NEXT_PUBLIC_contractId');
+    console.log('Make sure you have set the NEXT_PUBLIC_contractId in .env.development.local');
     process.exit(1);
 }
 export const contractId = process.env.NEXT_PUBLIC_contractId;
 
 if (!process.env.API_CODEHASH) {
-    console.log('Make sure you have set the following env vars: API_CODEHASH');
+    console.log('Make sure you have set the API_CODEHASH in .env.development.local');
     process.exit(1);
 }
 export const API_CODEHASH = process.env.API_CODEHASH;
 
 if (!options.build) {
     if (!process.env.APP_CODEHASH) {
-        console.log('Make sure you have set the following env vars: APP_CODEHASH');
+        console.log('Make sure you have set the APP_CODEHASH in .env.development.local');
         process.exit(1);
     }
 }
@@ -56,7 +56,7 @@ export const APP_CODEHASH = process.env.APP_CODEHASH;
 
 
 if (!process.env.DOCKER_TAG) {
-    console.log('Make sure you have set the following env vars: DOCKER_TAG');
+    console.log('Make sure you have set the DOCKER_TAG in .env.development.local');
     process.exit(1);
 }
 export const DOCKER_TAG = process.env.DOCKER_TAG;
@@ -73,7 +73,7 @@ export const IS_SANDBOX = prefix === 'ac-sandbox';
 
 if (IS_SANDBOX && options.phala) { // Don't require PHALA_API_KEY if in local or if phala is turned off
     if (!process.env.PHALA_API_KEY) {
-        console.log('Make sure you have set the following env vars: PHALA_API_KEY');
+        console.log('Make sure you have set the PHALA_API_KEY in .env.development.local');
         process.exit(1);
     }
 }
@@ -88,10 +88,10 @@ export const GLOBAL_CONTRACT_HASH = IS_SANDBOX
 const networkId = /testnet/gi.test(contractId) ? 'testnet' : 'mainnet';
 const signer = KeyPairSigner.fromSecretKey(secretKey);
 
-// Sets the RPC provider
-let provider;
 
-const createDefaultProvider = () => new JsonRpcProvider(
+// Function to create the default RPC provider
+function createDefaultProvider() {
+    return new JsonRpcProvider(
     {
         url: networkId === 'testnet'
             ? "https://test.rpc.fastnear.com"
@@ -102,11 +102,38 @@ const createDefaultProvider = () => new JsonRpcProvider(
         backoff: 2,
         wait: 1000,
     }
-);
+    );
+}
 
+// Function to update the .env.development.local file with the NEAR_RPC_JSON variable
+function updateEnvFile(nearRpcProvidersJson) {
+    const path = '.env.development.local';
+    const data = readFileSync(path).toString();
+
+    if (nearRpcProvidersJson.nearRpcProviders) {
+        // Add or update NEAR_RPC_JSON
+        const envValue = JSON.stringify(nearRpcProvidersJson);
+        const quotedEnvValue = `'${envValue}'`;
+        
+        const updated = data.includes('NEAR_RPC_JSON=')
+            ? data.replace(/NEAR_RPC_JSON=.*/g, `NEAR_RPC_JSON=${quotedEnvValue}`)
+            : data + `\nNEAR_RPC_JSON=${quotedEnvValue}`;
+        
+        writeFileSync(path, updated, 'utf8');
+        console.log('NEAR_RPC_JSON updated in .env.development.local');
+    } else {
+        // Remove NEAR_RPC_JSON if it exists
+        const updated = data.replace(/NEAR_RPC_JSON=.*\n?/g, '');
+        writeFileSync(path, updated, 'utf8');
+    }
+}
+
+// Sets the RPC provider
+let provider;
 try {
     const nearRpcProviders = readFileSync('./near-rpc.json', 'utf8');
     const nearRpcProvidersJson = JSON.parse(nearRpcProviders);
+    updateEnvFile(nearRpcProvidersJson);
     if (nearRpcProvidersJson.nearRpcProviders) {
         console.log('Using custom RPC providers');
         const providers = nearRpcProvidersJson.nearRpcProviders.map(config =>
@@ -125,14 +152,12 @@ try {
     provider = createDefaultProvider();
 }
 
-
 export const masterAccount = new Account(accountId, provider, signer);
 export const contractAccount = new Account(contractId, provider, signer);
 
 // Get the funding amount from the options
 export let FUNDING_AMOUNT;
 if (options.funding) {
-    console.log('Funding type:', typeof options.funding, 'Value:', options.funding);
     FUNDING_AMOUNT = NEAR.toUnits(options.funding);
 } else if (options.wasm) {
     FUNDING_AMOUNT = NEAR.toUnits('8');
