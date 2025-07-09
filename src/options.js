@@ -15,7 +15,8 @@ function setupOptions() {
         // Flags with --no prefix are true by default if not specified
         .option('-b, --no-build', 'Skip building and pushing the Docker image')
         .option('-p, --no-phala', 'Skip deploying the app to Phala Cloud')
-        .option('-e, --no-endpoint', 'Skip printing the endpoint of the app');
+        .option('-e, --no-endpoint', 'Skip printing the endpoint of the app')
+        .option('-s, --no-cache', 'Run docker build with --no-cache')
 
     return program;
 }
@@ -51,6 +52,11 @@ export function initializeOptions() {
 
     if (options.image && !options.build) {
         console.error('Error: Cannot use --image and --no-build together');
+        process.exit(1);
+    }
+
+    if (options.image && !options.cache) {
+        console.error('Error: Cannot use --image and --no-cache together');
         process.exit(1);
     }
 }

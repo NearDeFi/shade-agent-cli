@@ -32,12 +32,12 @@ export function stopContainer() {
     }
 }
 
-export function buildImage(dockerTag) {
+export function buildImage(dockerTag, cacheFlag) {
     // Builds the image
     console.log('Building Docker image...');
     try {
         execSync(
-            `docker build --no-cache --platform=linux/amd64 -t ${dockerTag}:latest .`,
+            `docker build ${cacheFlag} --platform=linux/amd64 -t ${dockerTag}:latest .`,
         );
         console.log('Docker image built');
         return true;
@@ -112,9 +112,9 @@ export function replaceInYaml(dockerTag, codehash) {
     }
 }
 
-export function dockerImage(dockerTag) {
+export function dockerImage(dockerTag, cacheFlag) {
     // Builds the image
-    if (!buildImage(dockerTag)) {
+    if (!buildImage(dockerTag, cacheFlag)) {
         return null;
     }
 
