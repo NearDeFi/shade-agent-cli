@@ -13,6 +13,7 @@ function setupOptions() {
         .option('-o, --phala-only', 'Just deploy the app to Phala Cloud')
 
         // Flags with --no prefix are true by default if not specified
+        .option('-d, --no-redeploy', 'Skip redeploying the contract')
         .option('-b, --no-build', 'Skip building and pushing the Docker image')
         .option('-p, --no-phala', 'Skip deploying the app to Phala Cloud')
         .option('-e, --no-endpoint', 'Skip printing the endpoint of the app')

@@ -44,20 +44,22 @@ async function main() {
     }
 
     // Create an account for the contract
-    const accountCreated = await createAccount(contractId, masterAccount, contractAccount);
-    if (!accountCreated) {
-        return;
-    }
+    if (options.redeploy) {
+        const accountCreated = await createAccount(contractId, masterAccount, contractAccount);
+        if (!accountCreated) {
+            return;
+        }
 
-    // Deploy the contract
-    let contractDeployed = false;
-    if (options.wasm) { // Deploy custom contract
-        contractDeployed = await deployCustomContract(contractAccount, options.wasm);
-    } else { // Deploy global contract
-        contractDeployed = await deployGlobalContract(contractAccount, GLOBAL_CONTRACT_HASH);
-    }
-    if (!contractDeployed) {
-        return;
+        // Deploy the contract
+        let contractDeployed = false;
+        if (options.wasm) { // Deploy custom contract
+            contractDeployed = await deployCustomContract(contractAccount, options.wasm);
+        } else { // Deploy global contract
+            contractDeployed = await deployGlobalContract(contractAccount, GLOBAL_CONTRACT_HASH);
+        }
+        if (!contractDeployed) {
+            return;
+        }
     }
 
     // Stop if --contract is set
@@ -66,9 +68,11 @@ async function main() {
     }
 
     // Initialize the contract
-    const contractInitialized = await initContract(contractAccount, contractId, masterAccount);
-    if (!contractInitialized) {
-        return;
+    if (options.redeploy) {
+        const contractInitialized = await initContract(contractAccount, contractId, masterAccount);
+        if (!contractInitialized) {
+            return;
+        }
     }
 
     // Approve the API codehash
