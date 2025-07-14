@@ -74,7 +74,7 @@ export async function deployGlobalContract(contractAccount, globalContractHash) 
 export async function initContract(contractAccount, contractId, masterAccount) {
     // Initializes the contract
     try {
-        const initRes = await contractAccount.functionCall({
+        const initRes = await contractAccount.callFunctionRaw({
             contractId,
             methodName: 'init',
             args: {
@@ -94,7 +94,7 @@ export async function initContract(contractAccount, contractId, masterAccount) {
 export async function approveCodehash(masterAccount, contractId, codehash) {
     // Approves the specified codehash
     try {
-        const approveRes = await masterAccount.functionCall({
+        const approveRes = await masterAccount.callFunctionRaw({
             contractId,
             methodName: 'approve_codehash',
             args: {
