@@ -105,35 +105,44 @@ function createDefaultProvider() {
     );
 }
 
-// Function to update the .env.development.local file with the NEAR_RPC_JSON variable
-function updateEnvFile(nearRpcProvidersJson) {
+function addRpcToEnv(nearRpcProvidersJson) {
+    console.log('Adding/updating NEAR_RPC_JSON in .env.development.local file');
     const path = '.env.development.local';
     const data = readFileSync(path).toString();
-
-    if (nearRpcProvidersJson.nearRpcProviders) {
-        // Add or update NEAR_RPC_JSON
+    if (nearRpcProvidersJson && nearRpcProvidersJson.nearRpcProviders) {
         const envValue = JSON.stringify(nearRpcProvidersJson);
         const quotedEnvValue = `'${envValue}'`;
-        
         const updated = data.includes('NEAR_RPC_JSON=')
             ? data.replace(/NEAR_RPC_JSON=.*/g, `NEAR_RPC_JSON=${quotedEnvValue}`)
             : data + `\nNEAR_RPC_JSON=${quotedEnvValue}`;
-        
         writeFileSync(path, updated, 'utf8');
         console.log('NEAR_RPC_JSON updated in .env.development.local');
     } else {
-        // Remove NEAR_RPC_JSON if it exists
-        const updated = data.replace(/NEAR_RPC_JSON=.*\n?/g, '');
-        writeFileSync(path, updated, 'utf8');
+        console.log('No nearRpcProviders found in provided JSON. Nothing added.');
     }
+}
+
+function removeRpcFromEnv() {
+    console.log('Removing NEAR_RPC_JSON from .env.development.local file');
+    const path = '.env.development.local';
+    const data = readFileSync(path).toString();
+    const updated = data.replace(/NEAR_RPC_JSON=.*\n?/g, '');
+    writeFileSync(path, updated, 'utf8');
+    console.log('NEAR_RPC_JSON removed from .env.development.local');
 }
 
 // Sets the RPC provider
 let provider;
 try {
-    const nearRpcProviders = readFileSync('./near-rpc.json', 'utf8');
-    const nearRpcProvidersJson = JSON.parse(nearRpcProviders);
-    updateEnvFile(nearRpcProvidersJson);
+    console.log('Reading near-rpc.json');
+    let nearRpcProvidersJson;
+    try {
+        const nearRpcProviders = readFileSync('./near-rpc.json', 'utf8');
+        nearRpcProvidersJson = JSON.parse(nearRpcProviders);
+        addRpcToEnv(nearRpcProvidersJson);
+    } catch (error) {
+        removeRpcFromEnv();
+    }
     if (nearRpcProvidersJson.nearRpcProviders) {
         console.log('Using custom RPC providers');
         const providers = nearRpcProvidersJson.nearRpcProviders.map(config =>
