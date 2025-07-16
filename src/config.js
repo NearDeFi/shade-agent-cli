@@ -81,8 +81,8 @@ export const PHALA_API_KEY = process.env.PHALA_API_KEY;
 
 // Hash of the global contract for sandbox or proxy
 export const GLOBAL_CONTRACT_HASH = IS_SANDBOX
-    ? '31x2yS1DZHUjMQQFXPBjbfojb4FQ8pBaER39YoReTpJb'
-    : '2pSLLgLnAM9PYD7Rj6SpdK9tJRz48GQ7GrnAXK6tmm8u';
+    ? 'GMXJXnVK9vYd7CSYPtbA56rPau2h5J4YjsSsCfegGi4G' // Sandbox
+    : 'Du58nfK5sfXPjyqsuju327tVJWtBYap2WdTSbimsfRrP'; // Proxy
 
 // NEAR configuration and signer
 const networkId = /testnet/gi.test(contractId) ? 'testnet' : 'mainnet';

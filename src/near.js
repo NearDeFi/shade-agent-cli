@@ -8,9 +8,19 @@ const GAS = BigInt('30000000000000');
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 export async function createAccount(contractId, masterAccount, contractAccount) {
+    // Use only the first provider for existence check to avoid failover on AccountDoesNotExist
+    let existenceCheckAccount = contractAccount;
+    if (contractAccount.provider && contractAccount.provider.providers && Array.isArray(contractAccount.provider.providers)) {
+        // Use the first provider in the list
+        existenceCheckAccount = new contractAccount.constructor(
+            contractAccount.accountId,
+            contractAccount.provider.providers[0],
+            contractAccount.signer
+        );
+    }
     // Check if the contract account exists and delete it if it does
     try {
-        await contractAccount.getBalance();
+        await existenceCheckAccount.getBalance();
         console.log("Account already exists, deleting...");
         await contractAccount.deleteAccount(masterAccount.accountId);
         console.log("Account deleted successfully");
@@ -28,6 +38,7 @@ export async function createAccount(contractId, masterAccount, contractAccount) 
 
     // Create the contract account
     try {
+        console.log('Creating account...');
         await masterAccount.createAccount(
             contractId,
             await masterAccount.getSigner().getPublicKey(),

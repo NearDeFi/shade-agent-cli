@@ -56,9 +56,9 @@ function deployToPhala(dockerTag) {
 
 export async function getAppUrl(appId, phalaApiKey) {
     console.log('Getting app url...');
-    const url = `https://cloud-api.phala.network/api/v1/cvms/${appId}/network`;
+    const url = `https://cloud-api.phala.network/api/v1/cvms/${appId}`;
     const maxAttempts = 30;
-    const delay = 1000; // 1 second
+    const delay = 1000;
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
         try {
