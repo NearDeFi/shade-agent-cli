@@ -36,9 +36,16 @@ export function buildImage(dockerTag, cacheFlag) {
     // Builds the image
     console.log('Building Docker image...');
     try {
-        execSync(
-            `docker build ${cacheFlag} --platform=linux/amd64 -t ${dockerTag}:latest .`,
-        );
+        let output;
+        if (process.platform === 'darwin') {
+            output = execSync(
+                `docker build ${cacheFlag} --platform=linux/amd64 -t ${dockerTag}:latest .`,
+            );
+        } else {
+            output = execSync(
+                `sudo docker build ${cacheFlag} --platform=linux/amd64 -t ${dockerTag}:latest .`,
+            );
+        }
         console.log('Docker image built');
         return true;
     } catch (e) {
@@ -51,9 +58,16 @@ export function pushImage(dockerTag) {
     // Pushes the image to docker hub
     console.log('Pushing Docker image...');
     try {
-        const output = execSync(
-            `docker push ${dockerTag}`,
-        );
+        let output;
+        if (process.platform === 'darwin') {
+            output = execSync(
+                `docker push ${dockerTag}`,
+            );
+        } else {
+            output = execSync(
+                `sudo docker push ${dockerTag}`,
+            );
+        }
         const newAppCodehash = output
             .toString()
             .match(/sha256:[a-f0-9]{64}/gim)[0]
