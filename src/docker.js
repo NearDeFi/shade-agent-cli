@@ -84,7 +84,7 @@ export function replaceInEnvFile(codehash) {
     // Replaces the codehash in the .env.development.local file
     try {
         const path = '.env.development.local';
-        const data = readFileSync(path).toString();
+        const data = readFileSync(path, 'utf8');
         const match = data.match(/APP_CODEHASH=[a-f0-9]{64}/gim)[0];
         const updated = data.replace(
             match,
@@ -106,7 +106,7 @@ export function replaceInYaml(dockerTag, codehash) {
     // Replaces the codehash in the docker-compose.yaml file
     try {
         const path = 'docker-compose.yaml';
-        let data = readFileSync(path).toString();
+        let data = readFileSync(path, 'utf8');
         const match = data.match(/@sha256:[a-f0-9]{64}/gim)[1];
         const replacementHash = `@sha256:${codehash}`;
         data = data.replace(match, replacementHash);

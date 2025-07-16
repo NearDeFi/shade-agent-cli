@@ -108,7 +108,7 @@ function createDefaultProvider() {
 function addRpcToEnv(nearRpcProvidersJson) {
     console.log('Adding/updating NEAR_RPC_JSON in .env.development.local file');
     const path = '.env.development.local';
-    const data = readFileSync(path).toString();
+    const data = readFileSync(path, 'utf8');
     if (nearRpcProvidersJson && nearRpcProvidersJson.nearRpcProviders) {
         const envValue = JSON.stringify(nearRpcProvidersJson);
         const quotedEnvValue = `'${envValue}'`;
@@ -125,7 +125,7 @@ function addRpcToEnv(nearRpcProvidersJson) {
 function removeRpcFromEnv() {
     console.log('Removing NEAR_RPC_JSON from .env.development.local file');
     const path = '.env.development.local';
-    const data = readFileSync(path).toString();
+    const data = readFileSync(path, 'utf8');
     const updated = data.replace(/NEAR_RPC_JSON=.*\n?/g, '');
     writeFileSync(path, updated, 'utf8');
     console.log('NEAR_RPC_JSON removed from .env.development.local');

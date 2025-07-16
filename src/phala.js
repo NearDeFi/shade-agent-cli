@@ -2,9 +2,9 @@ import { execSync } from 'child_process';
 
 // Use native fetch if available, otherwise require node-fetch
 let fetchFn;
-try {
+if (typeof fetch === 'function') {
     fetchFn = fetch;
-} catch (e) {
+} else {
     fetchFn = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 }
 
@@ -84,7 +84,7 @@ export async function getAppUrl(appId, phalaApiKey) {
             await new Promise(res => setTimeout(res, delay));
         }
     }
-    console.error('CVM Network Info did not become ready after 10 attempts.');
+    console.error(`CVM Network Info did not become ready after ${maxAttempts} attempts.`);
     return null;
 }
 
