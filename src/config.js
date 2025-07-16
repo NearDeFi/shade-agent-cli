@@ -134,7 +134,6 @@ function removeRpcFromEnv() {
 // Sets the RPC provider
 let provider;
 try {
-    console.log('Reading near-rpc.json');
     let nearRpcProvidersJson;
     try {
         const nearRpcProviders = readFileSync('./near-rpc.json', 'utf8');
