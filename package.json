@@ -1,24 +1,26 @@
 {
     "type": "module",
     "name": "@neardefi/shade-agent-cli",
-    "version": "0.0.6",
-    "main": "cli.js",
+    "version": "1.0.0",
+    "main": "src/cli.js",
     "author": "Matt Lockyer <github.com/mattlockyer>",
     "license": "MIT",
     "dependencies": {
-        "@near-js/accounts": "^2.1.0",
-        "@near-js/crypto": "^2.1.0",
-        "@near-js/providers": "^2.1.0",
-        "@near-js/signers": "^2.1.0",
-        "@near-js/tokens": "^2.1.0",
-        "@near-js/utils": "^2.1.0",
+        "@near-js/accounts": "^2.2.2",
+        "@near-js/crypto": "^2.2.2",
+        "@near-js/providers": "^2.2.2",
+        "@near-js/signers": "^2.2.2",
+        "@near-js/tokens": "^2.2.2",
+        "@near-js/utils": "^2.2.2",
         "bs58": "^6.0.0",
+        "chalk": "^5.4.1",
         "commander": "^14.0.0",
         "dotenv": "^16.5.0",
-        "near-seed-phrase": "^0.2.1"
+        "near-seed-phrase": "^0.2.1",
+        "phala": "^1.0.15"
     },
     "bin": {
-        "shade-agent-cli": "cli.js"
+        "shade-agent-cli": "src/cli.js"
     },
     "description": "This cli will help you launch shade agents",
     "repository": {
@@ -35,8 +37,7 @@
         "url": "https://github.com/NearDeFi/shade-agent-cli/issues"
     },
     "homepage": "https://github.com/NearDeFi/shade-agent-cli#readme",
-    "devDependencies": {},
     "scripts": {
-        "build": "rm -rf dist && mkdir dist && cp cli.js ./dist/cli.js && cp package.json ./dist/package.json"
+        "build": "rm -rf dist && mkdir dist && cp package.json ./dist/package.json && cp -r src ./dist/src"
     }
 }
