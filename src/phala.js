@@ -8,11 +8,15 @@ if (typeof fetch === 'function') {
     fetchFn = (...args) => import('node-fetch').then(({default: fetch}) => fetch(...args));
 }
 
+// Use the specific phala version
+const PHALA_VERSION = '1.0.35';
+const PHALA_COMMAND = `npx phala@${PHALA_VERSION}`;
+
 function loginToPhala(phalaApiKey) {
-    // Logs in to Phala Cloud using local phala package
+    // Logs in to Phala Cloud
     console.log('logging in to Phala Cloud...');
     try {
-        execSync(`npx phala auth login ${phalaApiKey}`);
+        execSync(`${PHALA_COMMAND} auth login ${phalaApiKey}`);
         console.log('Successfully logged in to Phala Cloud');
         return true;
     } catch (e) {
@@ -22,14 +26,20 @@ function loginToPhala(phalaApiKey) {
 }
 
 function deployToPhala(dockerTag) {
-    // Deploys the app to Phala Cloud using local phala package
+    // Deploys the app to Phala Cloud using phala CLI
     console.log('deploying to Phala Cloud...');
     const appNameSplit = dockerTag.split('/');
     const appName = appNameSplit[appNameSplit.length - 1];
     
+    // Validate app name length
+    if (appName.length <= 3) {
+        console.log('Error: Docker tag app name must be longer than 3 characters');
+        return null;
+    }
+    
     try {
         const result = execSync(
-            `npx phala cvms create --name ${appName} --vcpu 1 --compose ./docker-compose.yaml --env-file ./.env.development.local`,
+            `${PHALA_COMMAND} cvms create --name ${appName} --vcpu 1 --compose ./docker-compose.yaml --env-file ./.env.development.local`,
             { encoding: 'utf-8' }
         );
         console.log('deployed to Phala Cloud');

@@ -17,7 +17,7 @@
         "commander": "^14.0.0",
         "dotenv": "^16.5.0",
         "near-seed-phrase": "^0.2.1",
-        "phala": "^1.0.15"
+        "phala": "1.0.35"
     },
     "bin": {
         "shade-agent-cli": "src/cli.js"
