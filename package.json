@@ -1,7 +1,7 @@
 {
     "type": "module",
     "name": "@neardefi/shade-agent-cli",
-    "version": "1.0.0",
+    "version": "1.0.2",
     "main": "src/cli.js",
     "author": "Matt Lockyer <github.com/mattlockyer>",
     "license": "MIT",
