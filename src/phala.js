@@ -9,7 +9,7 @@ if (typeof fetch === 'function') {
 }
 
 // Use the specific phala version
-const PHALA_VERSION = '1.0.35';
+const PHALA_VERSION = '1.1.1';
 const PHALA_COMMAND = `npx phala@${PHALA_VERSION}`;
 
 function loginToPhala(phalaApiKey) {
