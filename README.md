@@ -1,5 +1,14 @@
 # Shade Agent CLI
 
+> [!WARNING]  
+> The Shade Agent Framework is experimental and contains known critical vulnerabilities.
+> 
+> It must not be used in production or on mainnet and is intended solely for testing and non-critical use on testnet.
+> 
+> No representations or warranties are made regarding security, correctness, or fitness for any purpose. Use of this software is entirely at your own risk.
+> 
+> A production-ready version of the framework is currently in development.
+
 This CLI tool will let you deploy the Shade Agent API docker image **both** locally and remotely on Phala Cloud.
 
 ## Installation
